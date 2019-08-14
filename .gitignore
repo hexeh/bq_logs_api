@@ -1,0 +1,12 @@
+
+*.xml
+*.iml
+*.pyc
+.DS_Store
+*.xml___jb_tmp___
+*.ipynb
+.idea/
+.ipynb_checkpoints/
+.DS_Store
+__pycache__/
+__test_configs/
