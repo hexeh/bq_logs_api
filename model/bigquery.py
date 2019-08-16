@@ -7,13 +7,14 @@ class BQLoader:
 		self.bq = bigquery.Client() if is_appengine else bigquery.Client.from_service_account_json(client_secrets_path)
 		self.ds = self.bq.dataset(dataset_name)
 	def loadCSV(self, table_name, data):
-		table_ref = self.ds.tablr(table_name)
+		table_ref = self.ds.table(table_name)
 		job_config = bigquery.LoadJobConfig()
 		job_config.autodetect = True
 		job_config.source_format = bigquery.SourceFormat.CSV
+		job_config.field_delimiter = '\t'
 		job_config.write_disposition = bigquery.WriteDisposition.WRITE_APPEND
 		job = self.bq.load_table_from_file(
-			io.BytesIO(data).encode('utf-8'),
+			io.BytesIO(data.encode('utf-8')),
 			table_ref,
 			location='EU',
 			job_config=job_config

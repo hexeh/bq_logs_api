@@ -1,6 +1,7 @@
 import json
 from datetime import date, timedelta
 from speaker import MetrikaLogsApi
+from model import BQLoader
 
 if __name__ == '__main__':
 	app_config_file = open('__test_configs/yandex_app_client.json')
@@ -40,12 +41,14 @@ if __name__ == '__main__':
 			with open('request_{}.csv'.format(req['request_id']), 'w') as fout:
 				fout.write(logs_api.saveRequest(counter_id, req))
 			logs_api.cleanRequest(counter_id, req['request_id'])
-	fout = open('test_run_{}.csv'.format(counter_id), 'w')
 	request_data = logs_api.processRequest(counter_id, {
-		'date1': date.today() - timedelta(days=366),
+		'date1': date.today() - timedelta(days=31),
 		'date2': date.today() - timedelta(days=1),
 		'source': 'visits'
 	})
-	fout.write(request_data[0])
-	# if response files > 1: '\n'.join([file[(1 if idx > 0 else 0):] for idx,file in enumerate(request_data)])
+	request_data = '\n'.join([file[(1 if idx > 0 else 0):] for idx, file in enumerate(request_data)])
+	fout = open('test_export_{}.csv'.format(counter_id), 'w')
+	fout.write(request_data)
 	fout.close()
+	bq = BQLoader('ClientData', False, '__test_configs/client_secrets.json')
+	bq.loadCSV('export_{}'.format(counter_id), request_data)
