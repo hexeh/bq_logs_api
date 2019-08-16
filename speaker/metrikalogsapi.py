@@ -1,5 +1,5 @@
 import time
-from datetime import timedelta
+from datetime import datetime,timedelta
 from model import YandexAPIClient
 
 
@@ -17,7 +17,7 @@ class MetrikaLogsApi(YandexAPIClient):
 		return self.requestProto(
 			'GET', 'api-metrika', 'management/v1/counter/{}/logrequests/evaluate'.format(counter_id),
 			params={
-			**request_params,
+				**request_params,
 				'date1': request_params['date1'].strftime('%Y-%m-%d'),
 				'date2': request_params['date2'].strftime('%Y-%m-%d'),
 			},
@@ -27,6 +27,7 @@ class MetrikaLogsApi(YandexAPIClient):
 	def composeRequestsChain(self, counter_id, request_params):
 		requests_chain = []
 		estimation = self.touchRequest(counter_id, request_params)
+		self.logger.debug('request: {}; evaluation: {}'.format(request_params, estimation))
 		if estimation['possible']:
 			requests_chain.append({**request_params, 'status': 'new'})
 		elif estimation['max_possible_day_quantity'] != 0:
@@ -45,6 +46,7 @@ class MetrikaLogsApi(YandexAPIClient):
 				})
 		else:
 			raise RuntimeError('Logs API can\'t load data: max_possible_day_quantity = 0')
+		self.logger.debug('composed request chain of {} requests'.format(len(requests_chain)))
 		return requests_chain
 
 	def listRequests(self, counter_id):
@@ -114,14 +116,22 @@ class MetrikaLogsApi(YandexAPIClient):
 			params['fields'] = self.field_options[params['source']]
 		params['fields'] = ','.join(params['fields'])
 		for poll in range(max(1, self.polling_options['retries'])):
-			time.sleep((poll - 1) * self.polling_options['retries_delay'])
-			chain = self.composeRequestsChain(counter_id, params)
+			time.sleep(poll * self.polling_options['retries_delay'])
+			if 'request_id' in params.keys():
+				chain = [params]
+			else:
+				chain = self.composeRequestsChain(counter_id, params)
 			chain_results = []
-			for request in chain:
-				request = self.createRequest(chain)
+			for req in chain:
+				request = {
+					'created': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+					**self.createRequest(counter_id, req)
+				}
+				self.logger.debug('created new api request: {}'.format(request))
 				while request['status'] != 'processed':
 					time.sleep(self.polling_options['retries_delay'])
-					request = self.describeRequest(counter_id, ['request_id'])
+					request = {**request, **self.describeRequest(counter_id, request['request_id'])}
+					self.logger.debug('polling request: {}'.format(request))
 				request_out = ''
 				for part in range(request['size']):
 					part_out = self.downloadRequestPart(counter_id, request['request_id'], part).split('\n')
