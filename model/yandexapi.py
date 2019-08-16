@@ -121,9 +121,15 @@ class YandexAPIClient:
 				request = requests.get(request_url, params=params)
 		request.encoding = 'utf-8'
 		if request.status_code == 200:
-			if 'application/json' in request.headers.get('content-type'):
+			# even for tsv content-type is application/json
+			# hello rfc: https://tools.ietf.org/html/rfc7231#section-3.1.1.5
+			# if 'application/json' in request.headers.get('content-type'):
+			# 	return json.loads(request.text)
+			# return request.text
+			try:
 				return json.loads(request.text)
-			return request.text
+			except ValueError:
+				return request.text
 		else:
 			self.logger.error('{} : {}'.format(point, request.text))
 			return None

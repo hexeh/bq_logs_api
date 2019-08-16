@@ -86,14 +86,15 @@ class MetrikaLogsApi(YandexAPIClient):
 
 	def downloadRequestPart(self, counter_id, request_id, part_no):
 		raw_content = self.requestProto(
-			'POST', 'api-metrika',
-			'management/v1/counter/{}/logrequest/{}/part/{}/download'.format(counter_id, request_id, part_no)
+			'GET', 'api-metrika',
+			'management/v1/counter/{}/logrequest/{}/part/{}/download'.format(counter_id, request_id, part_no),
+			restricted = True
 		)
 		lines_content = raw_content.split('\n')
 		headers_num = len(lines_content[0].split('\t'))
 		lines_filtered = list(filter(lambda x: len(x.split('\t')) == headers_num, raw_content.split('\n')))
 		num_filtered = len(lines_content) - len(lines_filtered)
-		if len(num_filtered) != 0:
+		if num_filtered != 0:
 			self.logger.warning('{} lines were filtered'.format(num_filtered))
 		if len(lines_filtered) > 1:
 			output_data = '\n'.join(lines_filtered)
@@ -111,6 +112,27 @@ class MetrikaLogsApi(YandexAPIClient):
 			restricted=True
 		).get('log_request')
 
+	def saveRequest(self, counter_id, request):
+		request_out = ''
+		request_parts = [p['part_number'] for p in request['parts']]
+		for part in request_parts:
+			part_out = self.downloadRequestPart(counter_id, request['request_id'], part).split('\n')
+			request_out += '\n'.join(part_out[(1 if part > 0 else 0):])
+		return request_out
+
+	def pollRequest(self, counter_id, request, created=False):
+		request = {
+			'created': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+			**(request if created else self.createRequest(counter_id, request))
+		}
+		while request['status'] != 'processed':
+			time.sleep(self.polling_options['retries_delay'])
+			request = {**request, **self.describeRequest(counter_id, request['request_id'])}
+			self.logger.debug('polling request: {}'.format(request))
+		request_result = self.saveRequest(counter_id, request)
+		self.cleanRequest(counter_id, request['request_id'])
+		return request_result
+
 	def processRequest(self, counter_id, params: dict):
 		if 'fields' not in params.keys():
 			params['fields'] = self.field_options[params['source']]
@@ -123,19 +145,5 @@ class MetrikaLogsApi(YandexAPIClient):
 				chain = self.composeRequestsChain(counter_id, params)
 			chain_results = []
 			for req in chain:
-				request = {
-					'created': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-					**self.createRequest(counter_id, req)
-				}
-				self.logger.debug('created new api request: {}'.format(request))
-				while request['status'] != 'processed':
-					time.sleep(self.polling_options['retries_delay'])
-					request = {**request, **self.describeRequest(counter_id, request['request_id'])}
-					self.logger.debug('polling request: {}'.format(request))
-				request_out = ''
-				for part in range(request['size']):
-					part_out = self.downloadRequestPart(counter_id, request['request_id'], part).split('\n')
-					request_out += '\n' + part_out[(1 if part > 0 else 0):]
-				chain_results.append(request_out)
-				self.cleanRequest(counter_id, request['request_id'])
+				chain_results.append(self.pollRequest(counter_id, req))
 		return chain_results
