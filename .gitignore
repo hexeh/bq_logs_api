@@ -5,9 +5,9 @@
 .DS_Store
 *.xml___jb_tmp___
 *.ipynb
-.idea/
-.ipynb_checkpoints/
 .DS_Store
-.csv
+*.csv
 __pycache__/
 __test_configs/
+.idea/
+.ipynb_checkpoints/
