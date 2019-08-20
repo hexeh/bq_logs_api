@@ -99,6 +99,13 @@ class YandexAPIClient:
 		)
 		return goals
 
+	def getCounterMeta(self, counter_id):
+		meta = self.requestProto(
+			'GET', 'api-metrika', 'management/v1/counter/{}'.format(counter_id),
+			restricted=True
+		)
+		return meta
+
 	def requestProto(self, http, service, point, params={}, restricted=False, content_type=None):
 		if content_type is None:
 			content_type = 'application/x-www-form-urlencoded'
