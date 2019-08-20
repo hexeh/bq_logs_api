@@ -6,7 +6,7 @@ This is not working version, please refer to [ToDo](todo.md)
 ## Configuration
 
 ```bash
-$ echo __test_configs/yandex_app_client.json
+$ cat __test_configs/yandex_app_client.json
 
 {
 	"app_name": "MyAppName",
@@ -18,7 +18,7 @@ $ echo __test_configs/yandex_app_client.json
 ```
 
 ```bash
-$ echo __test_configs/yandex_oauth_data.json
+$ cat __test_configs/yandex_oauth_data.json
 
 {
 	"access_token": "sdfsdfs",
@@ -30,7 +30,7 @@ $ echo __test_configs/yandex_oauth_data.json
 ```
 
 ```bash
-$ echo __run_configs/configuration.json
+$ cat __run_configs/configuration.json
 
 {
   "dataset": "MetrikaLogs",
