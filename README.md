@@ -21,10 +21,10 @@ $ cat __test_configs/yandex_app_client.json
 $ cat __test_configs/yandex_oauth_data.json
 
 {
-	"access_token": "sdfsdfs",
-	"expired_at": "2020-05-13 12:50:53",
-	"expires_in": "14950245",
-	"refresh_token": "1:fdsfds",
+    "access_token": "sdfsdfs",
+    "expired_at": "2020-05-13 12:50:53",
+    "expires_in": "14950245",
+    "refresh_token": "1:fdsfds",
     "token_type": "bearer"
 }
 ```
