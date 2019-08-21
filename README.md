@@ -2,7 +2,7 @@
 
 Short remake of [logs_api_integration](https://github.com/yndx-metrika/logs_api_integration) with BigQuery upload.
 
-This is not working version, please refer to [ToDo](todo.md)
+Mildly working prototype, for details please refer to [ToDo](todo.md)
 ## Configuration
 
 ```bash
@@ -60,4 +60,46 @@ $ cat __run_configs/configuration.json
 
 ```bash
 python3 client.py --help
+usage: client.py [-h] [-m {history,regular,regular_early,custom,detect}]
+                 [-dr [DATE_RANGE [DATE_RANGE ...]]] [-t {hits,visits}] [-c]
+
+Command-line interface for Metrika Logs API client
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -m {history,regular,regular_early,custusage: client.py [-h] [-m {history,regular,regular_early,custom,detect}]
+                 [-dr [DATE_RANGE [DATE_RANGE ...]]] [-t {hits,visits}] [-c]
+
+Command-line interface for Metrika Logs API
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -m {history,regular,regular_early,custom,detect}, --mode {history,regular,regular_early,custom,detect}
+                        Export mode: 
+                                 history  - all counter data,
+                                 regular  - data for past yesterday,
+                                 regular_early  - data for yesterday,
+                                 custom  - data for custom range (--date_range parameter need to be filled),
+                                 detect  - detect table data and upload only new dates
+  -dr [DATE_RANGE [DATE_RANGE ...]], --date_range [DATE_RANGE [DATE_RANGE ...]]
+                        Date range of stats to export (format:  YYYY-MM-DD ), 
+                        Works with custom mode only
+  -t {hits,visits}, --type {hits,visits}
+                        Source table to export stats
+  -c, --clean           Whether to clean data for same dates in database or not
+om,detect}, --mode {history,regular,regular_early,custom,detect}
+                        Export mode
+  -dr [DATE_RANGE [DATE_RANGE ...]], --date_range [DATE_RANGE [DATE_RANGE ...]]
+                        Date range of stats to export (format: YYYY-MM-DD)
+  -t {hits,visits}, --type {hits,visits}
+                        Source table to export stats
+  -c, --clean           Whether to clean data for same dates in database or
+                        not
+
+```
+
+### Run with automatic detection
+
+```bash
+ client.py --mode detect --type visits
 ```

@@ -92,7 +92,9 @@ class MetrikaLogsApi(YandexAPIClient):
 		)
 		lines_content = raw_content.split('\n')
 		headers_num = len(lines_content[0].split('\t'))
-		lines_filtered = list(filter(lambda x: len(x.split('\t')) == headers_num, raw_content.split('\n')))
+		lines_filtered = [row for row in lines_content if len(row.split('\t')) == headers_num]
+		for area in ['s', 'pv']:
+			lines_filtered[0] = lines_filtered[0].replace('ym:{}:'.format(area), '')
 		num_filtered = len(lines_content) - len(lines_filtered)
 		if num_filtered != 0:
 			self.logger.warning('{} lines were filtered'.format(num_filtered))
@@ -113,12 +115,13 @@ class MetrikaLogsApi(YandexAPIClient):
 		).get('log_request')
 
 	def saveRequest(self, counter_id, request):
-		request_out = ''
+		request_out = []
 		request_parts = [p['part_number'] for p in request['parts']]
 		for part in request_parts:
 			part_out = self.downloadRequestPart(counter_id, request['request_id'], part).split('\n')
-			request_out += '\n'.join(part_out[(1 if part > 0 else 0):])
-		return request_out
+			# На этом этапе бьются строки
+			request_out.append('\n'.join(part_out if int(part) == 0 else part_out[1:]))
+		return '\n'.join(request_out).replace(r"\'", "'")
 
 	def pollRequest(self, counter_id, request, created=False):
 		request = {

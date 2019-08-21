@@ -1,4 +1,5 @@
 import io
+import gzip
 from google.cloud import bigquery
 from google.cloud.exceptions import NotFound
 
@@ -15,28 +16,52 @@ class BQLoader:
 			ds.location = self.loc
 			self.bq.create_dataset(ds)
 
-	def getTableColumnMaxValue(self, column):
-		query = 'SELECT MAX({0!s}) as {0!s} FROM {1!s}.{2!s}'.format(
-			column, self.ds
+	def checkTableExists(self, table_name):
+		try:
+			self.getTableInstance(table_name)
+			return True
+		except NotFound:
+			return False
+
+	def getTableInstance(self, table_name):
+		return self.bq.get_table(self.ds.table(table_name))
+
+	def getTableColumnMaxValue(self, table, column):
+		if not self.checkTableExists(table):
+			return []
+		query = 'SELECT MAX({0!s}) as {0!s} FROM `{1!s}.{2!s}`'.format(
+			column, self.ds.dataset_id, table
 		)
 		query_job = self.bq.query(query)
 		job_result = query_job.result()
 		return [row for row in job_result]
 
-	def loadCSV(self, table_name, data):
+	def deleteFromTableOpenCondition(self, table, column, condition):
+		query = 'DELETE FROM `{}.{}` WHERE {} {}'.format(
+			self.ds.dataset_id, table, column, condition
+		)
+		query_job = self.bq.query(query)
+		job_result = query_job.result()
+		return [row for row in job_result]
+
+	def loadCSV(self, table_name, data, options, clean=False, compress=True):
 		table_ref = self.ds.table(table_name)
+		if clean:
+			if self.checkTableExists(table_name):
+				table_i = self.getTableInstance(table_name)
+				date_fields = [f.name for f in table_i.schema if f.field_type in ['DATE', 'DATETIME']]
+				condition = 'BETWEEN {0!r} and {1!r}'.format(
+					options['date1'].strftime('%Y-%m-%d') if 'request_id' not in options.keys() else options['date1'].split(' ')[0],
+					options['date2'].strftime('%Y-%m-%d') if 'request_id' not in options.keys() else options['date2'].split(' ')[0]
+				)
+				self.deleteFromTableOpenCondition(table_name, date_fields[0], condition)
 		job_config = bigquery.LoadJobConfig()
 		job_config.autodetect = True
 		job_config.source_format = bigquery.SourceFormat.CSV
 		job_config.field_delimiter = '\t'
 		job_config.write_disposition = bigquery.WriteDisposition.WRITE_APPEND
-		data = data.split('\n')
-		data_header = data[0]
-		for area in ['s', 'pv']:
-			data_header.replace('ym_{}_'.format(area), '')
-		data = '\n'.join(([data_header] + data[1:]))
 		job = self.bq.load_table_from_file(
-			io.BytesIO(data.encode('utf-8')),
+			io.BytesIO(gzip.compress(data.encode('utf-8')) if compress else data.encode('utf-8')),
 			table_ref,
 			location=self.loc,
 			job_config=job_config
