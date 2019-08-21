@@ -59,7 +59,9 @@ $ cat __run_configs/configuration.json
 ## Run
 
 ```bash
-python3 client.py --help
+$ python3 -m pip install -r requirements.txt
+$ python3 client.py --help
+
 usage: client.py [-h] [-m {history,regular,regular_early,custom,detect}]
                  [-dr [DATE_RANGE [DATE_RANGE ...]]] [-t {hits,visits}] [-c]
 
@@ -101,5 +103,5 @@ om,detect}, --mode {history,regular,regular_early,custom,detect}
 ### Run with automatic detection
 
 ```bash
- client.py --mode detect --type visits
+$ python3 client.py --mode detect --type visits
 ```
