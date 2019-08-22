@@ -1,6 +1,6 @@
 {
   "dataset": "MetrikaLogs",
-  "counter_id": "758643",
+  "counter_id": "7751785",
   "poll": {
     "retries": 1,
     "retries_delay": 20
@@ -9,8 +9,15 @@
     "visits": [
       "ym:s:counterID",
       "ym:s:dateTime",
-      "ym:s:date",
-      "ym:s:clientID"
+      "ym:s:clientID",
+      "ym:s:isNewUser",
+      "ym:s:deviceCategory",
+      "ym:s:params",
+      "ym:s:productsCategory2",
+      "ym:s:productsCategory3",
+      "ym:s:goalsID",
+      "ym:s:purchaseRevenue",
+      "ym:s:purchaseID"
     ],
     "hits": [
       "ym:pv:counterID",

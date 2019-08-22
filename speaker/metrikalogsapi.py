@@ -31,7 +31,7 @@ class MetrikaLogsApi(YandexAPIClient):
 		if estimation['possible']:
 			requests_chain.append({**request_params, 'status': 'new'})
 		elif estimation['max_possible_day_quantity'] != 0:
-			prolongation = (request_params['end_data'] - request_params['start_date']).days
+			prolongation = (request_params['date2'] - request_params['date1']).days
 			requests_count = int(prolongation/estimation['max_possible_day_quantity']) + 1
 			request_interval = int(prolongation/requests_count) + 1
 			for i in range(request_interval):
